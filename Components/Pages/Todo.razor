@@ -1,0 +1,97 @@
+﻿@page "/todo"
+@using BlazorHybridApp.Data
+@using Microsoft.Maui.Storage
+@using System.IO
+@using System.Text.Json
+@using EasyModbus
+
+<h3>Modbus Test Write</h3>
+
+<h5>Connect Microcontroller</h5>
+
+<button @onclick="Start">Start</button>
+<button @onclick="Stop">Stop</button>
+
+<h5>Write Holding Registers</h5>
+
+
+Number
+<input placeholder="Write Number Register Holding..." @bind="numReg_HR" />
+Value
+<input placeholder="Write Value..." @bind="valReg_HR" />
+<button @onclick="Set_HR">Set</button>
+
+
+
+<h5>Write Analog Outputs</h5>
+Number
+<input placeholder="Write Number Analog Inputs..." @bind="numReg_AI" />
+Value
+<input placeholder="Write Value..." @bind="valReg_AI" />
+<button @onclick="Set_AI">Set</button>
+
+
+
+
+
+<ul class="list-unstyled">
+    @foreach (var todo in todos)
+    {
+        <li>
+            <input type="checkbox" @bind="todo.IsDone" />
+            <input @bind="todo.Title"/>
+        </li>
+    }
+</ul>
+
+
+
+
+@code {
+    private List<TodoItem> todos = new();
+
+    private int numReg_HR;
+    private short valReg_HR;
+    private int numReg_AI;
+    private short valReg_AI;
+    private int numReg_DI;
+    private bool valReg_DI = false;
+    private int numReg_CO;
+    private bool valReg_CO = false;
+    private string? newTodo;
+
+    ModbusServer modServer;
+
+    
+
+
+    private void Start()
+    {
+        modServer = new ModbusServer();
+        modServer.Listen();
+        ModbusServer.HoldingRegisters regs = modServer.holdingRegisters;
+        
+    }
+
+    private void Set_HR()
+    {
+        ModbusServer.HoldingRegisters regs = modServer.holdingRegisters;
+        regs[numReg_HR] = valReg_HR;
+    }
+
+    private void Set_AI()
+    {
+        ModbusServer.InputRegisters regs = modServer.inputRegisters;
+        regs[numReg_AI] = valReg_AI;
+    }
+
+
+
+    private void Stop()
+    {
+        modServer.StopListening();
+        modServer = null;
+    }
+
+
+}

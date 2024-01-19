@@ -1,0 +1,99 @@
+﻿@page "/"
+
+@using BlazorHybridApp.Data
+@using Microsoft.Maui.Storage
+@using System.IO
+@using System.Text.Json
+@using EasyModbus
+
+
+
+<h3>Modbus Test</h3>
+
+<h5>Connect MCU</h5>
+
+<button @onclick="Start">Start</button>
+<button @onclick="Stop">Stop</button>
+
+
+<h5>Write Registers</h5>
+<p>Start<input placeholder="Write Start Registers..." @bind="startAdd_HR" /></p>
+<p>Number<input placeholder="Write Number of Registers..." @bind="numberOfRegister_HR" /></p>
+
+<button @onclick="readReg">Reading</button>
+<button @onclick="readReg">Set</button>
+<button @onclick="Save">Save</button>
+<button @onclick="Load">Load</button>
+
+
+@if (holdingReg != null)
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Registers</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < holdingReg.Length; i++)
+            {
+                <tr>
+                    <td>@(i + 40001 + startAdd_HR)</td>
+                    <td>@holdingReg[i]</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No data available</p>
+}
+
+
+
+
+@code {
+
+    ModbusClient modClient;
+    private int startAdd_HR;
+    private int numberOfRegister_HR;
+
+
+    private int[] holdingReg;
+
+
+    private void Start()
+    {
+        modClient = new ModbusClient("127.0.0.1", 502);
+        modClient.Connect();
+    }
+    void readReg()
+    {
+
+        if (modClient.Connected)
+        {
+            holdingReg = modClient.ReadHoldingRegisters(startAdd_HR, numberOfRegister_HR);
+
+        }
+    }
+
+
+    private void Stop()
+    {
+        modClient.Disconnect();
+    }
+
+    private async Task Save()
+    {
+        var contents = JsonSerializer.Serialize(holdingReg);
+        var path = Path.Combine(FileSystem.AppDataDirectory, "holdingReg.json");
+        File.WriteAllText(path, contents);
+        await App.Current.MainPage.DisplayAlert("List Saved", $"List has been saved to {path}", "OK");
+    }
+
+    private void Load()
+    {
+    }
+}
